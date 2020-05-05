@@ -6,3 +6,5 @@ pyvenv.cfg
 share/*
 *.ipynb_checkpoint*
 *__pycache__*
+config.cfg
+*~
