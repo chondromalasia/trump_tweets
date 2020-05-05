@@ -5,3 +5,4 @@ lib64
 pyvenv.cfg
 share/*
 *.ipynb_checkpoint*
+*__pycache__*
