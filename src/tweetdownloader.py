@@ -72,7 +72,6 @@ class TweetDownloader():
                 self.update_tweets_dict_short(tweet_json)
 
                 if pd.to_datetime(tweet_json["created_at"]) < target_date:
-                    print('woop')
                     exit_ = True
                     break
 
@@ -87,14 +86,18 @@ class TweetDownloader():
     def combine_datasets(self, new_tweets):
 
         df = pd.DataFrame.from_dict(new_tweets)
-        df.index = pd.to_datetime(df["created_at"])
-        df.index = df.index.tz_localize(None)
+        df.index = pd.to_datetime(df["created_at"], utc=True)
+        df = df[["id", "text"]]
+
 
         self.dataset = pd.concat([self.dataset, df])
+
         self.dataset.sort_index(inplace=True, ascending=False)
 
+        self.dataset = self.dataset[["id", "text"]]
+
         # check for duplicates
-        test = self.dataset.duplicated(['id_str'], keep='first')
+        test = self.dataset.duplicated(['id'], keep='first')
         logger.info(f"Found: {test.sum()} duplicate rows")
 
         self.dataset = self.dataset[~test]
@@ -102,19 +105,17 @@ class TweetDownloader():
 
     def update_tweets_dict(self, new_tweets, tweet):
 
-        labels = ["source", "text", "created_at", "retweet_count", "id_str"]
+        labels = ["created_at", "id", "text"]
 
         for label in labels:
             new_tweets[label].append(tweet[label])
-
-        new_tweets["is_retweet"].append("dummy")
 
         return new_tweets
 
     def update_dataset(self):
 
         # get most recent id
-        last_id = int(self.dataset.iloc[0]["id_str"])
+        last_id = int(self.dataset.iloc[0]["id"])
         new_tweets = defaultdict(list)
         logger.info(f"Liberating {self.to_load}")
 

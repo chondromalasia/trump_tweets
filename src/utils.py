@@ -16,7 +16,7 @@ def tweets(to_load, amount='basic'):
 
     df = pd.read_csv(tweet_path)
 
-    df.index = pd.to_datetime(df["created_at"])
+    df.index = pd.to_datetime(df["created_at"], utc=True)
 
     if amount == 'basic':
 
