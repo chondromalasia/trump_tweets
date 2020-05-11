@@ -19,7 +19,7 @@ def basic_poisson(data, days_left, tweets_so_far, lower, buckets=9, gap=10):
     likelihoods = dict()
     
     mu = data.mean()
-    
+
     adj_mu = int(round(mu * days_left))
     
     rv = poisson(adj_mu)
