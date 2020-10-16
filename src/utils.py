@@ -8,22 +8,28 @@ import pytz
 import pandas as pd
 
 
-market_numbers = {"whitehouse":6692,
-                 "potus":6696,
-                 "realDonaldTrump":6689}
+market_numbers = {"whitehouse":6708,
+                 "potus":6712,
+                  "realDonaldTrump":6718}
 
 html_head = "<!DOCTYPE html>\n<html>\n<body>"
 html_end = "</body>\n</html>"
 
-def kelly(odds, prices):
-    df = pd.DataFrame([odds,prices])
-    df = df.T
-    df.columns = ["odds", "prices"]
+def kelly(odds, prices, prices_neg):
+    df = pd.concat([odds,prices,prices_neg], axis=1)
+    df.columns = ["odds", "prices", "prices_neg"]
     df["odds"] = df["odds"] * .01
-    df["win"] = 1 - df["prices"]
-    df["b"] = df["win"] / df["prices"]
+    df["win_y"] = (1 - df["prices"]) * .9
+    df["b_y"] = df["win_y"] / df["prices"]
     df["q"] = 1 - df["odds"]
-    df["f"] = df["odds"] - df["q"] / df["b"]
+    df["f_y"] = df["odds"] - df["q"] / df["b_y"]
+
+    # calculate same for nos
+    df["win_n"] = (1 - df["prices_neg"]) * .9
+    df["b_n"] = df["win_n"] / df["prices_neg"]
+    df["f_n"] = df["q"] - df["odds"] / df["b_n"]
+
+    
     return df
     
 
@@ -52,7 +58,7 @@ def process_name(name):
 def num_from_str(string): return [int(i) for i in string.split() if i.isdigit()]
 
 def price_info(auction_data):
-    Data = namedtuple("Data", "lower gap days_left start_date prices")
+    Data = namedtuple("Data", "lower gap days_left start_date prices prices_neg")
 
     lower = min([num_from_str(i["name"])[0] for i in auction_data["contracts"]])
 
@@ -70,13 +76,20 @@ def price_info(auction_data):
     time_left = end_date - datetime.datetime.now(tz=pytz.timezone("US/Eastern"))
 
     # convert it to a decimal form 2 days 12 minutes -> 2.5
-    days_left = time_left.days + round((time_left.seconds / 2880) - (time_left.days * 2) / 24) * .01
+    days_left = time_left.days + round((time_left.seconds / 86400), 3)
 
     prices = dict()
+    prices_neg = dict()
     for contract in auction_data["contracts"]:
         prices[process_name(contract["name"])] = contract["bestBuyYesCost"]
+        prices_neg[process_name(contract["name"])] = contract["bestBuyNoCost"]
 
-    return Data(lower=lower, gap=gap, days_left=days_left, start_date=start_date, prices=prices)
+    return Data(lower=lower,
+                gap=gap,
+                days_left=days_left,
+                start_date=start_date,
+                prices=prices,
+                prices_neg=prices_neg)
 
     
 

@@ -47,4 +47,5 @@ def basic_poisson(data, days_left, tweets_so_far, lower, buckets=9, gap=10):
     for thing in likelihoods:
         likelihoods[thing] = float(f"{likelihoods[thing]:.3f}")*100
             
-    return likelihoods
+    return pd.DataFrame.from_dict(likelihoods,
+                                  orient='index')
